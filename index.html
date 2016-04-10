@@ -75,7 +75,7 @@
                     <section>
                         <h3>What kind of capabilities?</h3>
                         <p class="fragment">Authorization</p>
-                        <p class="fragment">Volume</p>
+                        <p class="fragment">VolumeDriver</p>
                         <p class="fragment">Network</p>
                         <p class="fragment">IPAM</p>
                     </section>
@@ -161,7 +161,207 @@
                     </section>
                 </section>
                 <section>
-                    <h2>Volume Plugins</h2>
+                    <section>
+                        <h2>VolumeDriver Plugins</h2>
+                    </section>
+                    <section>
+                        <p>A volume plugin makes use of the flags: </p>
+                        <p><span class="text-facile">-v</span> : to specify the volume name</p>
+                        <p><span class="text-facile">--volume-driver</span> : to specify the driver</p>
+                    </section>
+                    <section>
+                        <pre><code data-noescape data-trim>
+docker run -ti \
+  -v volumename:/folder \
+  --volume-driver=myplugin \
+alpine sh
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h2>VolumeDriver.plugin protocol</h2>
+                        <p>Plugins that provide volume capabilities must register themself as <span class="text-facile">VolumeDriver</span></p>
+                        <p>A VolumeDriver.plugin is expected to <span class="text-facile">provide writable paths</span> on the host filesystem</p>
+                    </section>
+                    <section>
+                        <h2>How does it work</h2>
+                        <p class="fragment">The client asks the Daemon for a volume</p>
+                        <pre><code data-noescape data-trim>
+docker run -ti \
+  -v volumename:/folder \
+  --volume-driver=myplugin \
+alpine sh
+                        </code></pre>
+                    </section>
+
+                    <!-- VolumeDriver.Create -->
+                    <section>
+                        <p class="fragment">The Daemon calls the <span class="text-facile">/VolumeDriver.Create</span> RPC on the plugin</p>
+                        <p>
+                        <span class="text-facile">POST</span>
+                        /VolumeDriver.Create
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Name": "volumename",
+    "Opts": {}
+}
+                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, the plugin gives the result with no error.</p>
+                    </section>
+
+                    <!-- VolumeDriver.Mount -->
+                    <section>
+                        <p class="fragment">The Daemon calls <span class="text-facile">/VolumeDriver.Mount</span> on the plugin</p>
+                        <p>
+                        <span class="text-facile">POST</span>
+                        /VolumeDriver.Mount
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Name": "volumename"
+}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Mountpoint": "/data/volumename",
+    "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, respond with the <span class="text-facile">writable mountpoint</span> on the host filesystem and  no error.</p>
+                    </section>
+
+
+                    <!-- VolumeDriver.Unmount -->
+                    <section>
+                        <p class="fragment">The Daemon calls <span class="text-facile">/VolumeDriver.Unmount</span> when is no longer using that volume</p>
+                        <p>
+                        <span class="text-facile">POST</span>
+                        /VolumeDriver.Unmount
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Name": "volumename"
+}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, respond with no error.</p>
+                    </section>
+
+                    <!-- VolumeDriver.Remove -->
+                    <section>
+                        <p>
+                        <span an class="text-facile">POST</span>
+                        /VolumeDriver.Remove
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Name": "volumename"
+}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, respond with no error.</p>
+                    </section>
+
+                    <!-- VolumeDriver.Path -->
+                    <section>
+                        <p class="fragment">Given a volume name, return the Mountpoint</p>
+                        <p>
+                        <span an class="text-facile">POST</span>
+                        /VolumeDriver.Path
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Name": "volumename"
+}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Mountpoint": "/data/volumename",
+    "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, respond with no error.</p>
+                    </section>
+
+                    <!-- VolumeDriver.Get -->
+                    <section>
+                        <p class="fragment">Given a volume name, get info about it</p>
+                        <p>
+                        <span an class="text-facile">POST</span>
+                        /VolumeDriver.Get
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Name": "volumename"
+}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+  "Volume": {
+    "Name": "volumename",
+    "Mountpoint": "/path/to/directory/on/host",
+  },
+  "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, respond with no error.</p>
+                    </section>
+
+
+                    <!-- VolumeDriver.List -->
+                    <section>
+                        <p class="fragment">List all volumes registered by the plugin</p>
+                        <p>
+                        <span an class="text-facile">POST</span>
+                        /VolumeDriver.Path
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+  "Volumes": [
+    {
+      "Name": "volumename",
+      "Mountpoint": "/data/volumename"
+    }
+  ],
+  "Err": ""
+}
+                        </code></pre>
+                        <p class="fragment">If everything is ok, respond with no error.</p>
+                    </section>
+                    <section>
+                        <h2>WAIT!</h2>
+                        <p class="fragment">There's nothing from Docker that can help me implementing this?</p>
+                        <p class="fragment">Yay! <a href="https://github.com/docker/go-plugins-helpers">github.com/docker/go-plugins-helpers</a></p>
+                    </section>
+                    <section>
+                        <h2>Demo</h2>
+                        <p class="fragment"><i>hope that everything works as expected</i></p>
+                    </section>
+
                 </section>
             </div>
         </div>
