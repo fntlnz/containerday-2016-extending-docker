@@ -79,12 +79,19 @@
                         <p class="fragment">Network</p>
                         <p class="fragment">IPAM</p>
                     </section>
+                    <section>
+                        <h3>What we did before plugins?</h3>
+                        <p>Wrap the Docker Remote API</p>
+                        <p>Wrap the Docker Remote API</p>
+                        <p>Wrap the Docker Remote API</p>
+                        <p>Wrap the Docker Remote API</p>
+                    </section>
                 </section>
                 <section>
                     <section>
-                        <h2>How do they work?</h2>
+                        <h2>How</h2>
                         <p class="fragment">The plugin implements an <span class="text-facile">HTTP server</span> which can be discovered by Docker</p>
-                        <p class="fragment">The HTTP server exposes an RPC over JSON API</p>
+                        <p class="fragment">The HTTP server exposes a set of RPCs issued as HTTP POSTs with JSON payloads</p>
                         <p class="fragment">Docker makes a request to the plugin whenever is needed</p>
                     </section>
                     <section>
@@ -157,7 +164,18 @@
                             <li>VolumeDriver</li>
                             <li>IpamDriver</li>
                         </ul>
-                        <p>Each protocol provides <span class="text-facile">its own RPC calls</span> in addition to the activation call<p>
+                        <p>Each protocol provides <span class="text-facile">its own set of RPC calls</span> in addition to the activation call<p>
+                    </section>
+                    <section>
+                        <h3>Error handling</h3>
+                        <p>Is done via the response error form</p>
+                        <pre><code data-noescape data-trim>
+{
+    "Err": string
+}
+                        </code></pre>
+                        <p>That should be used along with the HTTP error statuses <span class="text-facile">400</span> and <span class="text-facile">500</span> </p>
+
                     </section>
                 </section>
                 <section>
@@ -178,9 +196,14 @@ alpine sh
                         </code></pre>
                     </section>
                     <section>
-                        <h2>VolumeDriver.plugin protocol</h2>
-                        <p>Plugins that provide volume capabilities must register themself as <span class="text-facile">VolumeDriver</span></p>
-                        <p>A VolumeDriver.plugin is expected to <span class="text-facile">provide writable paths</span> on the host filesystem</p>
+                        <h2>VolumeDriver plugin protocol</h2>
+                        <p>Plugins that provide volume capabilities must register themself as <span class="text-facile">VolumeDriver</span> during the Handshake</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Implements": ["VolumeDriver"]
+}
+                    </pre></code>
+                        <p>A VolumeDriver plugin is expected to <span class="text-facile">provide writable paths</span> on the host filesystem</p>
                     </section>
                     <section>
                         <h2>How does it work</h2>
@@ -195,7 +218,7 @@ alpine sh
 
                     <!-- VolumeDriver.Create -->
                     <section>
-                        <p class="fragment">The Daemon calls the <span class="text-facile">/VolumeDriver.Create</span> RPC on the plugin</p>
+                        <p>The Daemon calls the <span class="text-facile">/VolumeDriver.Create</span> RPC on the plugin</p>
                         <p>
                         <span class="text-facile">POST</span>
                         /VolumeDriver.Create
@@ -213,12 +236,12 @@ alpine sh
     "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, the plugin gives the result with no error.</p>
+                        <p>If everything is ok, the plugin gives the result with no error.</p>
                     </section>
 
                     <!-- VolumeDriver.Mount -->
                     <section>
-                        <p class="fragment">The Daemon calls <span class="text-facile">/VolumeDriver.Mount</span> on the plugin</p>
+                        <p>The Daemon calls <span class="text-facile">/VolumeDriver.Mount</span> on the plugin</p>
                         <p>
                         <span class="text-facile">POST</span>
                         /VolumeDriver.Mount
@@ -235,13 +258,13 @@ alpine sh
     "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, respond with the <span class="text-facile">writable mountpoint</span> on the host filesystem and  no error.</p>
+                        <p>If everything is ok, respond with the <span class="text-facile">writable mountpoint</span> on the host filesystem and  no error.</p>
                     </section>
 
 
                     <!-- VolumeDriver.Unmount -->
                     <section>
-                        <p class="fragment">The Daemon calls <span class="text-facile">/VolumeDriver.Unmount</span> when is no longer using that volume</p>
+                        <p>The Daemon calls <span class="text-facile">/VolumeDriver.Unmount</span> when is no longer using that volume</p>
                         <p>
                         <span class="text-facile">POST</span>
                         /VolumeDriver.Unmount
@@ -257,7 +280,7 @@ alpine sh
     "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, respond with no error.</p>
+                        <p>If everything is ok, respond with no error.</p>
                     </section>
 
                     <!-- VolumeDriver.Remove -->
@@ -277,12 +300,12 @@ alpine sh
     "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, respond with no error.</p>
+                        <p>If everything is ok, respond with no error.</p>
                     </section>
 
                     <!-- VolumeDriver.Path -->
                     <section>
-                        <p class="fragment">Given a volume name, return the Mountpoint</p>
+                        <p>Given a volume name, return the Mountpoint</p>
                         <p>
                         <span an class="text-facile">POST</span>
                         /VolumeDriver.Path
@@ -299,12 +322,12 @@ alpine sh
     "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, respond with no error.</p>
+                        <p>If everything is ok, respond with no error.</p>
                     </section>
 
                     <!-- VolumeDriver.Get -->
                     <section>
-                        <p class="fragment">Given a volume name, get info about it</p>
+                        <p>Given a volume name, get info about it</p>
                         <p>
                         <span an class="text-facile">POST</span>
                         /VolumeDriver.Get
@@ -324,13 +347,13 @@ alpine sh
   "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, respond with no error.</p>
+                        <p>If everything is ok, respond with no error.</p>
                     </section>
 
 
                     <!-- VolumeDriver.List -->
                     <section>
-                        <p class="fragment">List all volumes registered by the plugin</p>
+                        <p>List all volumes registered by the plugin</p>
                         <p>
                         <span an class="text-facile">POST</span>
                         /VolumeDriver.Path
@@ -350,8 +373,62 @@ alpine sh
   "Err": ""
 }
                         </code></pre>
-                        <p class="fragment">If everything is ok, respond with no error.</p>
+                        <p>If everything is ok, respond with no error.</p>
                     </section>
+                    <section>
+                        <h2>Some useful volume plugins</h2>
+                        <p class="text-facile">Flocker:</p> https://clusterhq.com/docker-plugin
+                        <p class="text-facile">GlusterFS plugin:</p> https://github.com/calavera/docker-volume-glusterfs
+                        <p class="text-facile">IPFS plugin:</p> http://github.com/vdemeester/docker-volume-ipfs
+                        <p class="text-facile">OpenStorage plugin:</p> https://github.com/libopenstorage/openstorage
+                    </section>
+
+                </section>
+
+                <section>
+                    <section>
+                        <h2>NetworkDriver plugins</h2>
+                    </section>
+                    <section>
+                        <h2>NetworkDriver plugin protocol</h2>
+                        <p>Plugins that provide network capabilities must register themself as <span class="text-facile">NetworkDriver</span> during the Handshake</p>
+                        <pre><code data-trim data-noescape>
+{
+    "Implements": ["NetworkDriver"]
+}
+                    </pre></code>
+                        <p>This indicates that the plugin should be registered with LibNetwork as driver</p>
+                    </section>
+
+                    <!--NetworkDriver.GetCapabilities -->
+                    <section>
+                        <p></p>
+                        <p>
+                        <span an class="text-facile">POST</span>
+                        /NetworkDriver
+                        </p>
+                        <p style="text-align:left; font-size: 75%">Request:</p>
+                        <pre><code data-trim data-noescape>
+{}                        </code></pre>
+                        <p style="text-align:left; font-size: 75%">Response:</p>
+                        <pre><code data-trim data-noescape>
+{
+  "Volumes": [
+    {
+      "Name": "volumename",
+      "Mountpoint": "/data/volumename"
+    }
+  ],
+  "Err": ""
+}
+                        </code></pre>
+                        <p>If everything is ok, respond with no error.</p>
+                    </section>
+
+                </section>
+
+
+                <section>
                     <section>
                         <h2>WAIT!</h2>
                         <p class="fragment">There's nothing from Docker that can help me implementing this?</p>
@@ -361,8 +438,15 @@ alpine sh
                         <h2>Demo</h2>
                         <p class="fragment"><i>hope that everything works as expected</i></p>
                     </section>
-
                 </section>
+
+                <section>
+                    <h2>Thanks for listening</h2>
+                </section>
+                <section>
+                    <h1>Questions?</h1>
+                </section>
+
             </div>
         </div>
 
